@@ -15,7 +15,13 @@ Generate health report for given list of servers. Done as a hobby utility. This 
 
 ### Executing program
 
+#### Cloning the Repo
 * Clone the project.
 * Build it.
+* Make sure to fill the ___ServerList.xlsx file with all the server names.
+* Execute with ServerHealthReport.exe
+
+#### Downloading the Release
+* Download Zip from Release and extract it.
 * Make sure to fill the ___ServerList.xlsx file with all the server names.
 * Execute with ServerHealthReport.exe
