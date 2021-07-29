@@ -3,6 +3,18 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <PackageId>Server Health Report Generator</PackageId>
+    <Authors>W</Authors>
+    <Product>Server Health Report Generator</Product>
+    <Copyright>W</Copyright>
+    <Company>W</Company>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageIconUrl />
+    <RepositoryUrl>https://github.com/waseem852/ServerHealthReport</RepositoryUrl>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>W.pfx</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +25,10 @@
   <ItemGroup>
     <None Update="___ServerList.xlsx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
     </None>
   </ItemGroup>
 

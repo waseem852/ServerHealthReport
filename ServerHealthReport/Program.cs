@@ -34,7 +34,8 @@ namespace ServerHealthReport
                 var outputFolder = "___HealthReports";
 
                 Directory.CreateDirectory(outputFolder);
-                var file = new FileInfo($@"{outputFolder}\{DateTime.Today.Date.ToShortDateString().Replace("/", string.Empty)}.xlsx");
+                //var file = new FileInfo($@"{outputFolder}\{DateTime.Today.Date.ToShortDateString().Replace("/", string.Empty)}.xlsx");
+                var file = new FileInfo($@"{outputFolder}\{DateTime.Today:yyyy-MMMM-dd}.xlsx");
 
                 await SaveExcelFileAsync(serverInfo, file).ConfigureAwait(false);
 
