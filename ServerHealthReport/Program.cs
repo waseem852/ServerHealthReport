@@ -7,12 +7,15 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ServerHealthReport
 {
     class Program
     {
+
         static async Task Main(string[] args)
         {
 
@@ -21,10 +24,16 @@ namespace ServerHealthReport
             var file = new FileInfo("___ServerList.xlsx");
 
             var serversList = await GetServerListAsync(file).ConfigureAwait(false);
+
+            Console.WriteLine($"Found {serversList.Count} Servers from the Excel");
+
             var allInfo = GetServerInfo(serversList);
+
+            Console.WriteLine($"Found {allInfo.Count()} Server info");
 
             await GenerateExcelAsync(allInfo).ConfigureAwait(false);
 
+            Console.Read();
         }
 
         private static async Task GenerateExcelAsync(IEnumerable<ServerInformation> serverInfo)
@@ -55,96 +64,132 @@ namespace ServerHealthReport
 
         private static async Task SaveExcelFileAsync(IEnumerable<ServerInformation> serverInfo, FileInfo file)
         {
-            DeleteIfExists(file);
-
-            using var package = new ExcelPackage(file);
-
-            var workSheet = package.Workbook.Worksheets.Add("HealthReport");
 
 
-
-
-            //var range = workSheet.Cells["A1"].LoadFromCollection(serverInfo, true);
-
-            //range.AutoFitColumns();
-
-            //await package.SaveAsync().ConfigureAwait(false);
-
-            var i = 2;
-
-            workSheet.Cells[1, 1].LoadFromText("Server Name, " +
-                                                       "Server IP," +
-                                                       "CPU Status," +
-                                                       "memory Status," +
-                                                       "machine Status," +
-                                                       "Disk Driver Letter," +
-                                                       "Drive Name," +
-                                                       "Total Size," +
-                                                       "Used," +
-                                                       "Free," +
-                                                       "Free Percentage");
-
-
-
-
-            foreach (var serverInformation in serverInfo)
+            try
             {
+                DeleteIfExists(file);
+
+                using var package = new ExcelPackage(file);
+
+                var workSheet = package.Workbook.Worksheets.Add("HealthReport");
 
 
-                var cpuStatus = $"CPU: with {serverInformation.NumberOfCores} Cores avg Load {serverInformation.ProcessorLoadAverage}%";
-                var memoryStatus =
-                    $"RAM: {serverInformation.TotalVisibleMemory:F} GB with {serverInformation.FreeMemoryPercentage:F}% Free";
-                var machineStatus = $"UPTIME: {serverInformation.ServerUptime}";
 
 
-                if (string.IsNullOrWhiteSpace(serverInformation.Error))
+                //var range = workSheet.Cells["A1"].LoadFromCollection(serverInfo, true);
+
+                //range.AutoFitColumns();
+
+                //await package.SaveAsync().ConfigureAwait(false);
+
+                var i = 2;
+
+                workSheet.Cells[1, 1].LoadFromText("Server Name, " +
+                                                           "Server IP," +
+                                                           "CPU Status," +
+                                                           "memory Status," +
+                                                           "machine Status," +
+                                                           "Disk Driver Letter," +
+                                                           "Drive Name," +
+                                                           "Total Size," +
+                                                           "Used," +
+                                                           "Free," +
+                                                           "Free Percentage");
+
+
+
+
+                foreach (var serverInformation in serverInfo)
                 {
-                    foreach (var diskInformation in serverInformation.DiskInfo)
+                    Thread.Sleep(1000);
+
+                    if (string.IsNullOrWhiteSpace(serverInformation.Error))
                     {
 
+                        var cpuStatus = $"CPU: with {serverInformation.NumberOfCores} Cores avg Load {serverInformation.ProcessorLoadAverage}%";
+                        var memoryStatus =
+                            $"RAM: {serverInformation.TotalVisibleMemory:F} GB with {serverInformation.FreeMemoryPercentage:F}% Free";
+                        var machineStatus = $"UPTIME: {serverInformation.ServerUptime}";
 
 
-                        workSheet.Cells[i, 1].LoadFromText($"{serverInformation.ServerName}, " +
-                                                           $"{serverInformation.ServerIp}," +
-                                                           $"{cpuStatus}," +
-                                                           $"{memoryStatus}," +
-                                                           $"{machineStatus}," +
-                                                           $"{diskInformation.DiskDriverLetter}," +
-                                                           $"{diskInformation.DriveName}," +
-                                                           $"{diskInformation.TotalSize} GB," +
-                                                           $"{diskInformation.Used} GB," +
-                                                           $"{diskInformation.Free} GB," +
-                                                           $"{diskInformation.FreePercentage:F} %");
+                        if (serverInformation.DiskInfo.Count > 0)
+                        {
+                            foreach (var diskInformation in serverInformation.DiskInfo)
+                            {
 
-                        workSheet.Cells[i, 11].Style.Numberformat.Format = "#0.00%";
+
+
+                                workSheet.Cells[i, 1].LoadFromText($"{serverInformation.ServerName}, " +
+                                                                   $"{serverInformation.ServerIp}," +
+                                                                   $"{cpuStatus}," +
+                                                                   $"{memoryStatus}," +
+                                                                   $"{machineStatus}," +
+                                                                   $"{diskInformation.DiskDriverLetter}," +
+                                                                   $"{diskInformation.DriveName}," +
+                                                                   $"{diskInformation.TotalSize} GB," +
+                                                                   $"{diskInformation.Used} GB," +
+                                                                   $"{diskInformation.Free} GB," +
+                                                                   $"{diskInformation.FreePercentage:F} %");
+
+                                workSheet.Cells[i, 11].Style.Numberformat.Format = "#0.00%";
+
+                                i++;
+                            }
+                        }
+                        else
+                        {
+                            workSheet.Cells[i, 1].LoadFromText($"{serverInformation.ServerName}, " +
+                                                                  $"{serverInformation.ServerIp}," +
+                                                                  $"{cpuStatus}," +
+                                                                  $"{memoryStatus}," +
+                                                                  $"{machineStatus}," +
+                                                                  $" ," +
+                                                                  $" ," +
+                                                                  $"  GB," +
+                                                                  $"  GB," +
+                                                                  $"  GB," +
+                                                                  $"  %");
+
+                            workSheet.Cells[i, 11].Style.Numberformat.Format = "#0.00%";
+
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        workSheet.Cells[i, 2, i, 11].Merge = true;
+
+                        //workSheet.Cells[i, 1].Value = serverInformation.ServerName;
+                        //workSheet.Cells[i, 2].Value = serverInformation.Error;
+
+                        workSheet.Cells[i, 1, i, 11].Style.Font.Color.SetColor(Color.Yellow);
+
+                        workSheet.Cells[i, 1, i, 11].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        workSheet.Cells[i, 1, i, 11].Style.Fill.BackgroundColor.SetColor(Color.Red);
 
                         i++;
+
+
+                        workSheet.Cells[i, 1].LoadFromText($"{serverInformation.ServerName}," +
+                                                           $"{serverInformation.Error}");
+
+
                     }
-                }
-                else
-                {
-                    workSheet.Cells[i, 2, i, 11].Merge = true;
-
-                    //workSheet.Cells[i, 1].Value = serverInformation.ServerName;
-                    //workSheet.Cells[i, 2].Value = serverInformation.Error;
-
-                    workSheet.Cells[i, 1, i, 11].Style.Font.Color.SetColor(Color.Yellow);
-
-                    workSheet.Cells[i, 1, i, 11].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    workSheet.Cells[i, 1, i, 11].Style.Fill.BackgroundColor.SetColor(Color.Red);
 
 
-                    workSheet.Cells[i, 1].LoadFromText($"{serverInformation.ServerName}," +
-                                                       $"{serverInformation.Error}");
+
+
 
 
                 }
 
-
-
+                await package.SaveAsync().ConfigureAwait(false);
             }
-
-            await package.SaveAsync().ConfigureAwait(false);
+            catch (Exception e)
+            {
+                throw;
+            }
 
 
 
@@ -167,6 +212,12 @@ namespace ServerHealthReport
             foreach (var server in serversList)
             {
                 var serverInfo = GetServerInfo(server);
+
+
+
+
+
+
                 serverInfoList.Add(serverInfo);
             }
 
@@ -239,10 +290,24 @@ namespace ServerHealthReport
 
 
                 //Get Server IP
-                var serverIpAddress = networkQueryCollection
-                    .Cast<ManagementObject>()
-                    .SelectMany(o => (string[])(o["IPAddress"]))
-                    .FirstOrDefault(a => a.Contains('.'));
+
+
+
+                //var serverIpAddressList = networkQueryCollection
+                //    .Cast<ManagementObject>()
+                //    .SelectMany(o => (string[])(o["IPAddress"]));
+                ////    .FirstOrDefault(a => a.Contains('.'));
+
+                //var serverIpAddress = string.Join(",", serverIpAddressList);
+
+
+                var ipAddressList = Dns.GetHostEntry(serverName).AddressList;
+
+                var serverIpAddress = string.Join(",", ipAddressList.ToList());
+
+
+
+                //var serverIpAddress = Dns.GetHostEntry(serverName).AddressList[0].ToString();
                 serverInfo.ServerIp = serverIpAddress;
 
 
@@ -263,7 +328,7 @@ namespace ServerHealthReport
                     cores += int.Parse(processorQueryResult["NumberOfCores"].ToString());
 
                     //Load percentage
-                    loadPercentage.Add(int.Parse(processorQueryResult["LoadPercentage"].ToString()));
+                    loadPercentage.Add(int.Parse(processorQueryResult["LoadPercentage"]?.ToString()));
 
                 }
                 serverInfo.NumberOfCores = cores.ToString();
@@ -290,10 +355,10 @@ namespace ServerHealthReport
                     var seconds = timeGap.Seconds;
 
 
-                    string day = string.Empty;
-                    string hour = string.Empty;
-                    string minute = string.Empty;
-                    string second = string.Empty;
+                    var day = string.Empty;
+                    var hour = string.Empty;
+                    var minute = string.Empty;
+                    var second = string.Empty;
 
 
                     day = days == 1 ? "1 day " : $"{days} days ";

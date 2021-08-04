@@ -12,14 +12,16 @@
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <RepositoryUrl>https://github.com/waseem852/ServerHealthReport</RepositoryUrl>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>W.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="EPPlus" Version="5.7.2" />
+    <PackageReference Include="SimpleImpersonation" Version="3.0.0" />
     <PackageReference Include="System.Management" Version="5.0.0" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
